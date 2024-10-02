@@ -134,9 +134,9 @@ def get_distance_matrix():
         else:
             print(f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
 
-    for delivery_id in ids_list:
-        dist_matrix = mp.build_url(delivery_id, ids_list)  # Passa o ID e a lista completa
-        print(dist_matrix)
+    
+    dist_matrix,time_matrix = mp.build_url(ids_list)  # Passa o ID e a lista completa
+    
 
 if __name__ == '__main__':
     window = Tk()
