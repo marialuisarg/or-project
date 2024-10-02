@@ -130,13 +130,13 @@ def get_distance_matrix():
         
         # Verifica se o valor está no dicionário
         if delivery_point in delivery_points_dict:
-            ids_list.append(delivery_points_dict[delivery_point])
+            ids_list.append("place_id:"+delivery_points_dict[delivery_point])
         else:
             print(f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
 
     for delivery_id in ids_list:
-        url = mp.build_url(delivery_id, ids_list)  # Passa o ID e a lista completa
-        print(f"URL gerada: {url}")
+        dist_matrix = mp.build_url(delivery_id, ids_list)  # Passa o ID e a lista completa
+        print(dist_matrix)
 
 if __name__ == '__main__':
     window = Tk()
