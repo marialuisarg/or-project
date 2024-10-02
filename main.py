@@ -2,7 +2,7 @@ from tkinter import Tk, Label, Entry, Button, Frame, StringVar, OptionMenu
 import maps_api_handler as mp
 
 # Dicionário que associa nome do ponto de entrega a um id
-pontos_entrega_map = {
+delivery_points_dict = {
     "Petrópolis":"ChIJX8jgemIAmQARqkMTFntxVf0",
     "JUIZ DE FORA":"ChIJoV344UOcmAARaKSgsyawNmI",
     "Rio Pomba":"ChIJ3Swriwv4ogAR1LEPOKSjZ5o",
@@ -82,9 +82,9 @@ def add_row():
     delivery_label.pack(side='left', padx=5)
 
     # Menu suspenso para o ponto de entrega
-    ponto_entrega_var = StringVar(row_frame)
-    ponto_entrega_var.set(list(pontos_entrega_map.keys())[0])  # Define a opção padrão (o primeiro nome)
-    delivery_point_menu = OptionMenu(row_frame, ponto_entrega_var, *pontos_entrega_map.keys())
+    delivery_point_var = StringVar(row_frame)
+    delivery_point_var.set(list(delivery_points_dict.keys())[0])  
+    delivery_point_menu = OptionMenu(row_frame, delivery_point_var, *delivery_points_dict.keys())
     delivery_point_menu.pack(side='left', padx=5)
 
     # Label para a carga 
@@ -95,7 +95,7 @@ def add_row():
     load_label = Label(row_frame, text="P:")
     load_label.pack(side='left', padx=5)
 
-    # Campo de texto para a carga
+    # Campo de texto para a carga - P
     load_P = Entry(row_frame, width=5)
     load_P.pack(side='left', padx=5)
     
@@ -103,7 +103,7 @@ def add_row():
     load_label = Label(row_frame, text="M:")
     load_label.pack(side='left', padx=5)
 
-    # Campo de texto para a carga
+    # Campo de texto para a carga - M
     load_M = Entry(row_frame, width=5)
     load_M.pack(side='left', padx=5)
     
@@ -111,36 +111,32 @@ def add_row():
     load_label = Label(row_frame, text="G:")
     load_label.pack(side='left', padx=5)
 
-    # Campo de texto para a carga
+    # Campo de texto para a carga - G
     load_G = Entry(row_frame, width=5)
     load_G.pack(side='left', padx=5)
 
-    # Armazena a nova linha (usamos a variável StringVar para acessar o valor selecionado)
-    data_rows.append((ponto_entrega_var, load_P, load_M, load_G))
+    # Armazena a nova linha
+    data_rows.append((delivery_point_var, load_P, load_M, load_G))
 
-def gerar_rotas():
-    # Coleta os dados inseridos e converte em um dicionário JSON
-    dados_para_enviar = {
-        "entregas": [
-            {
-                "ponto_entrega_id": pontos_entrega_map[ponto_entrega_var.get()],
-                "carga": load.get()
-            }
-            for ponto_entrega_var, load in data_rows
-        ]
-    }
-
-    # Exemplo: exibe os dados que serão enviados
-    print("Dados para enviar:", dados_para_enviar)
-
-    # Envia os dados para a API e recebe a matriz de distâncias
-    matriz_distancias = mp.send_data_to_api(dados_para_enviar)
+def get_distance_matrix():
     
-    if matriz_distancias:
-        print("Matriz de distâncias recebida:", matriz_distancias)
-        # Aqui você pode iniciar o seu algoritmo de otimização
-    else:
-        print("Erro ao processar a solicitação")
+    ids_list = []
+    
+    for row in data_rows:
+        delivery_point_var, load_P, load_M, load_G = row
+    
+        # Acessa o valor da StringVar usando .get()
+        delivery_point = delivery_point_var.get()
+        
+        # Verifica se o valor está no dicionário
+        if delivery_point in delivery_points_dict:
+            ids_list.append(delivery_points_dict[delivery_point])
+        else:
+            print(f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
+
+    for delivery_id in ids_list:
+        url = mp.build_url(delivery_id, ids_list)  # Passa o ID e a lista completa
+        print(f"URL gerada: {url}")
 
 if __name__ == '__main__':
     window = Tk()
@@ -159,7 +155,7 @@ if __name__ == '__main__':
     add_row_button = Button(button_frame, text="+", width=5, command=add_row)
     add_row_button.pack(side='left', padx=5)
 
-    gerar_button = Button(button_frame, text="Gerar rotas", width=36, command=gerar_rotas)
-    gerar_button.pack(side='right', padx=5)
+    create_button = Button(button_frame, text="Gerar rotas", width=36, command=get_distance_matrix)
+    create_button.pack(side='right', padx=5)
 
     window.mainloop()

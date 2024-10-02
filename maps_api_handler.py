@@ -16,7 +16,7 @@ def build_url(origin_id, destination_id):
 
     url = f"{API_URL}?{urllib.parse.urlencode(params)}"
 
-    print(url)
+    return url
 
 #def send_data_to_api(delivery_data):
     
