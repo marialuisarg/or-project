@@ -1,7 +1,7 @@
-from tkinter import Tk, Label, Entry, Button, Frame, StringVar, OptionMenu
+from tkinter import Tk, Label, Entry, Button, Frame, StringVar, Listbox, Scrollbar
 import maps_api_handler as mp
+import pyomo
 
-# Dicionário que associa nome do ponto de entrega a um id
 delivery_points_dict = {
     "Petrópolis":"ChIJX8jgemIAmQARqkMTFntxVf0",
     "JUIZ DE FORA":"ChIJoV344UOcmAARaKSgsyawNmI",
@@ -72,6 +72,41 @@ delivery_points_dict = {
     "RJ - Mesquita":"ChIJLXOC-dZgmQARkh8-kC1RJlE",
     "RJ - Belford Roxo":"ChIJaTNJK25vmQARcMLcTsC0f7s"
 }
+def create_custom_dropdown(parent, variable, options):
+    def toggle_menu():
+        # Se o menu já estiver aberto, feche-o
+        if listbox_frame.winfo_ismapped():
+            listbox_frame.pack_forget()
+        else:
+            listbox_frame.pack(fill='x')
+
+    # Cria um botão que mostra a seleção atual
+    button = Button(parent, textvariable=variable, command=toggle_menu, width=20, relief="raised")
+    button.pack(side='left')
+
+    # Frame que conterá o Listbox e a Scrollbar
+    listbox_frame = Frame(parent)
+
+    scrollbar = Scrollbar(listbox_frame)
+    scrollbar.pack(side='right', fill='y')
+
+    listbox = Listbox(listbox_frame, yscrollcommand=scrollbar.set, height=5)
+    for option in options:
+        listbox.insert('end', option)
+    listbox.pack(fill='both', expand=True)
+
+    scrollbar.config(command=listbox.yview)
+
+    def select_option(event):
+        # Verifica se há uma seleção antes de tentar obter o valor
+        if listbox.curselection():
+            selection = listbox.get(listbox.curselection())
+            variable.set(selection)
+            listbox_frame.pack_forget()  # Fecha o menu após selecionar a opção
+
+    listbox.bind("<<ListboxSelect>>", select_option)
+
+    return button, listbox_frame
 
 def add_row():
     row_frame = Frame(data_frame)
@@ -81,62 +116,47 @@ def add_row():
     delivery_label = Label(row_frame, text="Ponto de Entrega:")
     delivery_label.pack(side='left', padx=5)
 
-    # Menu suspenso para o ponto de entrega
+    # Variável para armazenar a opção selecionada
     delivery_point_var = StringVar(row_frame)
-    delivery_point_var.set(list(delivery_points_dict.keys())[0])  
-    delivery_point_menu = OptionMenu(row_frame, delivery_point_var, *delivery_points_dict.keys())
+    delivery_point_var.set(list(delivery_points_dict.keys())[0])  # Valor inicial
+
+    # Cria o dropdown personalizado
+    delivery_point_menu, listbox_frame = create_custom_dropdown(row_frame, delivery_point_var, delivery_points_dict.keys())
     delivery_point_menu.pack(side='left', padx=5)
 
-    # Label para a carga 
+    # Label para a carga
     load_label = Label(row_frame, text="Carga -")
-    load_label.pack(side='left', padx=5)
-    
-    # Label para a carga - P
-    load_label = Label(row_frame, text="P:")
     load_label.pack(side='left', padx=5)
 
     # Campo de texto para a carga - P
     load_P = Entry(row_frame, width=5)
     load_P.pack(side='left', padx=5)
-    
-    # Label para a carga - M
-    load_label = Label(row_frame, text="M:")
-    load_label.pack(side='left', padx=5)
 
     # Campo de texto para a carga - M
     load_M = Entry(row_frame, width=5)
     load_M.pack(side='left', padx=5)
-    
-    # Label para a carga - G
-    load_label = Label(row_frame, text="G:")
-    load_label.pack(side='left', padx=5)
 
     # Campo de texto para a carga - G
     load_G = Entry(row_frame, width=5)
     load_G.pack(side='left', padx=5)
 
-    # Armazena a nova linha
+    # Armazena a nova linha de dados
     data_rows.append((delivery_point_var, load_P, load_M, load_G))
 
 def get_distance_matrix():
-    
     ids_list = []
     
     for row in data_rows:
         delivery_point_var, load_P, load_M, load_G = row
-    
-        # Acessa o valor da StringVar usando .get()
         delivery_point = delivery_point_var.get()
-        
-        # Verifica se o valor está no dicionário
         if delivery_point in delivery_points_dict:
             ids_list.append("place_id:"+delivery_points_dict[delivery_point])
         else:
             print(f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
-
     
-    dist_matrix,time_matrix = mp.build_url(ids_list)  # Passa o ID e a lista completa
-    
+    # Aqui você pode passar os IDs para gerar a matriz de distância com a API
+    dist_matrix, time_matrix = mp.build_url(ids_list)
+    #print(dist_matrix)
 
 if __name__ == '__main__':
     window = Tk()

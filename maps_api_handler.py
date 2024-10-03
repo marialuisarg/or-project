@@ -5,7 +5,7 @@ import json
 from types import SimpleNamespace
 
 #Perform request to use the Google Maps API web service
-API_key = 'AIzaSyBZWxSWokcKsYv-j54EIs6NwCawgHHc5WY'
+API_key = 'AIzaSyDfkPrtiT_mO2xw5leQ1nJnObYR-4asiAU'
 API_URL = "https://maps.googleapis.com/maps/api/distancematrix/json"  
 
 def build_url(id_list):
