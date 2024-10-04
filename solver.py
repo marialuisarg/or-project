@@ -15,8 +15,12 @@ def rule_const3(model, i, j):
         return model.u[i] - model.u[j] + model.x[i, j] * n <= n - 1
     else:
         return pyEnv.Constraint.Skip
+    
+# Restrição de volume de carga
+def rule_volume(model):
+    return sum(model.volume[i] * sum(model.x[i, j] for j in model.N) for i in model.N) <= 15
 
-def create_model(n, dist_matrix):
+def create_model(n, dist_matrix, total_volume):
     # Model
     model = pyEnv.ConcreteModel()
 
@@ -32,6 +36,9 @@ def create_model(n, dist_matrix):
     # Distance Matrix cij
     model.c = pyEnv.Param(model.N, model.N, initialize=lambda model, i, j: dist_matrix[i - 1][j - 1])
 
+    # Volume
+    model.volume = pyEnv.Param(model.N, initialize=lambda model, i: total_volume[i - 1])
+    
     # Objective Function
     model.objective = pyEnv.Objective(rule=obj_func, sense=pyEnv.minimize)
 
@@ -39,6 +46,7 @@ def create_model(n, dist_matrix):
     model.const1 = pyEnv.Constraint(model.N, rule=rule_const1)
     model.const2 = pyEnv.Constraint(model.N, rule=rule_const2)
     model.rest3 = pyEnv.Constraint(model.N, model.N, rule=rule_const3)
+    model.volume_constraint = pyEnv.Constraint(rule=rule_volume)
 
     # Solver
     solver = pyEnv.SolverFactory('glpk')
@@ -51,3 +59,4 @@ def create_model(n, dist_matrix):
     for i in l:
         if model.x[i]() != 0:
             print(i, '--', model.x[i]())
+

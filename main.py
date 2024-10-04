@@ -145,21 +145,44 @@ def add_row():
 
 def get_distance_matrix():
     ids_list = []
+    volume_list = []
+    total_volume = 0
     
     ids_list.append("place_id:ChIJoV344UOcmAARaKSgsyawNmI")
+    volume_list.append(0)
     
     for row in data_rows:
         delivery_point_var, load_P, load_M, load_G = row
         delivery_point = delivery_point_var.get()
+        
+         # Obtenha os volumes de caixas P, M e G
+        try:
+            p_volume = int(load_P.get()) * 0.0025
+            m_volume = int(load_M.get()) * 0.01
+            g_volume = int(load_G.get()) * 0.054
+        except ValueError:
+            print("Erro: Quantidade de caixas inválida, deve ser um número.")
+            return
+        
+        # Calcula o volume total para o ponto de entrega
+        point_volume = p_volume + m_volume + g_volume
+        total_volume += point_volume
+        
         if delivery_point in delivery_points_dict:
             ids_list.append("place_id:"+delivery_points_dict[delivery_point])
         else:
             print(f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
+            
+        # Verifica se o volume total excede o limite
+        if total_volume > 15:
+            print(f"Erro: O volume total ({total_volume:.2f} m³) excede o limite do veículo de 15 m³.")
+            return
+        
+        volume_list.append(total_volume)
     
-    # Aqui você pode passar os IDs para gerar a matriz de distância com a API
     dist_matrix, time_matrix = mp.build_url(ids_list)
     
-    glpk.create_model(len(dist_matrix), dist_matrix)
+    glpk.create_model(len(dist_matrix), dist_matrix, volume_list)
 
 if __name__ == '__main__':
     window = Tk()
