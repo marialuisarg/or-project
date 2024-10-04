@@ -121,7 +121,8 @@ def add_row():
     delivery_point_var = StringVar(row_frame)
     
     # Inicia com a primeira cidade disponível, filtrada
-    available_cities = [city for city in delivery_points_dict.keys() if city not in selected_cities]
+    available_cities = ["Selecione uma cidade"]
+    available_cities.append(city for city in delivery_points_dict.keys() if city not in selected_cities)
     if not available_cities:
         messagebox.showinfo("Info", "Não há mais pontos de entrega disponíveis.")
         return
