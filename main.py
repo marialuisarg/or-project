@@ -1,4 +1,4 @@
-from tkinter import Tk, Label, Entry, Button, Frame, StringVar, Listbox, Scrollbar
+from tkinter import Tk, Label, Entry, Button, Frame, StringVar, Listbox, Scrollbar, messagebox
 import maps_api_handler as mp
 import solver as glpk
 
@@ -161,7 +161,7 @@ def get_distance_matrix():
             m_volume = int(load_M.get()) * 0.01
             g_volume = int(load_G.get()) * 0.054
         except ValueError:
-            print("Erro: Quantidade de caixas inválida, deve ser um número.")
+            messagebox.showerror("Erro","Quantidade de caixas inválida, deve ser um número.")
             return
         
         # Calcula o volume total para o ponto de entrega
@@ -171,11 +171,11 @@ def get_distance_matrix():
         if delivery_point in delivery_points_dict:
             ids_list.append("place_id:"+delivery_points_dict[delivery_point])
         else:
-            print(f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
+           messagebox.showerror("Erro",f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
             
         # Verifica se o volume total excede o limite
         if total_volume > 15:
-            print(f"Erro: O volume total ({total_volume:.2f} m³) excede o limite do veículo de 15 m³.")
+            messagebox.showerror("Erro",f"O volume total ({total_volume:.2f} m³) excede o limite do veículo de 15 m³.")
             return
         
         volume_list.append(total_volume)
