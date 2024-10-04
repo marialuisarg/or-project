@@ -92,7 +92,6 @@ def create_custom_dropdown(parent, variable, options):
 
     listbox = Listbox(listbox_frame, yscrollcommand=scrollbar.set, height=5)
     
-    # Preenche a lista com as opções disponíveis, excluindo as já selecionadas
     filtered_options = [option for option in options if option not in selected_cities]
     for option in filtered_options:
         listbox.insert('end', option)
@@ -104,7 +103,7 @@ def create_custom_dropdown(parent, variable, options):
         if listbox.curselection():
             selection = listbox.get(listbox.curselection())
             variable.set(selection)
-            selected_cities.append(selection)  # Adiciona cidade à lista de selecionadas
+            selected_cities.append(selection) 
             listbox_frame.pack_forget()
 
     listbox.bind("<<ListboxSelect>>", select_option)
@@ -120,7 +119,6 @@ def add_row():
 
     delivery_point_var = StringVar(row_frame)
     
-    # Inicia com a primeira cidade disponível, filtrada
     available_cities = ["Selecione uma cidade"]
     available_cities.append(city for city in delivery_points_dict.keys() if city not in selected_cities)
     if not available_cities:
@@ -151,17 +149,17 @@ def get_distance_matrix():
     volume_list = []
     total_volume = 0
 
-    ids_list.append("place_id:ChIJoV344UOcmAARaKSgsyawNmI")  # ID do ponto inicial (referência)
-    volume_list.append(0)  # Volume inicial é zero
+    ids_list.append("place_id:ChIJoV344UOcmAARaKSgsyawNmI") 
+    volume_list.append(0) 
 
     for row in data_rows:
         delivery_point_var, load_P, load_M, load_G = row
         delivery_point = delivery_point_var.get()
 
         try:
-            p_volume = int(load_P.get()) * 0.0025
-            m_volume = int(load_M.get()) * 0.01
-            g_volume = int(load_G.get()) * 0.054
+            p_volume = max(int(load_P.get()), 0) * 0.0025
+            m_volume = max(int(load_M.get()), 0) * 0.01
+            g_volume = max(int(load_G.get()), 0) * 0.054
         except ValueError:
             messagebox.showerror("Erro", "Quantidade de caixas inválida, deve ser um número.")
             return
@@ -173,8 +171,8 @@ def get_distance_matrix():
             ids_list.append("place_id:" + delivery_points_dict[delivery_point])
         else:
             messagebox.showerror("Erro", f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
+            return
 
-        # Adiciona o volume do ponto de entrega à lista de volumes
         volume_list.append(point_volume)
 
         if total_volume > 15:
@@ -198,7 +196,7 @@ if __name__ == '__main__':
     add_row_button = Button(window, text="Adicionar Ponto de Entrega", command=add_row)
     add_row_button.pack(pady=10)
 
-    generate_button = Button(window, text="Gerar Rota", command=get_distance_matrix)
-    generate_button.pack(pady=10)
+    get_distance_button = Button(window, text="Gerar Rota", command=get_distance_matrix)
+    get_distance_button.pack(pady=10)
 
     window.mainloop()
