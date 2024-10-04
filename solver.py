@@ -59,4 +59,6 @@ def create_model(n, dist_matrix, total_volume):
     for i in l:
         if model.x[i]() != 0:
             print(i, '--', model.x[i]())
+            
+    return model.x
 

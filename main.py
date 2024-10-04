@@ -183,7 +183,9 @@ def get_distance_matrix():
 
     dist_matrix, time_matrix = mp.build_url(ids_list)
 
-    glpk.create_model(len(dist_matrix), dist_matrix, volume_list)
+    model = glpk.create_model(len(dist_matrix), dist_matrix, volume_list)
+    
+    mp.plot_result(ids_list, model)
 
 if __name__ == '__main__':
     window = Tk()
