@@ -72,37 +72,40 @@ delivery_points_dict = {
     "RJ - Belford Roxo":"ChIJaTNJK25vmQARcMLcTsC0f7s"
 }
 
+data_rows = []
+selected_cities = []
+
 def create_custom_dropdown(parent, variable, options):
     def toggle_menu():
-        # Se o menu já estiver aberto, feche-o
         if listbox_frame.winfo_ismapped():
             listbox_frame.pack_forget()
         else:
             listbox_frame.pack(fill='x')
 
-    # Cria um botão que mostra a seleção atual
     button = Button(parent, textvariable=variable, command=toggle_menu, width=20, relief="raised")
     button.pack(side='left')
 
-    # Frame que conterá o Listbox e a Scrollbar
     listbox_frame = Frame(parent)
 
     scrollbar = Scrollbar(listbox_frame)
     scrollbar.pack(side='right', fill='y')
 
     listbox = Listbox(listbox_frame, yscrollcommand=scrollbar.set, height=5)
-    for option in options:
+    
+    # Preenche a lista com as opções disponíveis, excluindo as já selecionadas
+    filtered_options = [option for option in options if option not in selected_cities]
+    for option in filtered_options:
         listbox.insert('end', option)
     listbox.pack(fill='both', expand=True)
 
     scrollbar.config(command=listbox.yview)
 
     def select_option(event):
-        # Verifica se há uma seleção antes de tentar obter o valor
         if listbox.curselection():
             selection = listbox.get(listbox.curselection())
             variable.set(selection)
-            listbox_frame.pack_forget()  # Fecha o menu após selecionar a opção
+            selected_cities.append(selection)  # Adiciona cidade à lista de selecionadas
+            listbox_frame.pack_forget()
 
     listbox.bind("<<ListboxSelect>>", select_option)
 
@@ -112,76 +115,73 @@ def add_row():
     row_frame = Frame(data_frame)
     row_frame.pack(fill='x', pady=5)
 
-    # Label para o ponto de entrega
     delivery_label = Label(row_frame, text="Ponto de Entrega:")
     delivery_label.pack(side='left', padx=5)
 
-    # Variável para armazenar a opção selecionada
     delivery_point_var = StringVar(row_frame)
-    delivery_point_var.set(list(delivery_points_dict.keys())[0])  # Valor inicial
+    
+    # Inicia com a primeira cidade disponível, filtrada
+    available_cities = [city for city in delivery_points_dict.keys() if city not in selected_cities]
+    if not available_cities:
+        messagebox.showinfo("Info", "Não há mais pontos de entrega disponíveis.")
+        return
 
-    # Cria o dropdown personalizado
+    delivery_point_var.set(available_cities[0])
+
     delivery_point_menu, listbox_frame = create_custom_dropdown(row_frame, delivery_point_var, delivery_points_dict.keys())
     delivery_point_menu.pack(side='left', padx=5)
 
-    # Label para a carga
-    load_label = Label(row_frame, text="Carga -")
+    load_label = Label(row_frame, text="Carga (P/M/G):")
     load_label.pack(side='left', padx=5)
 
-    # Campo de texto para a carga - P
     load_P = Entry(row_frame, width=5)
     load_P.pack(side='left', padx=5)
 
-    # Campo de texto para a carga - M
     load_M = Entry(row_frame, width=5)
     load_M.pack(side='left', padx=5)
 
-    # Campo de texto para a carga - G
     load_G = Entry(row_frame, width=5)
     load_G.pack(side='left', padx=5)
 
-    # Armazena a nova linha de dados
     data_rows.append((delivery_point_var, load_P, load_M, load_G))
 
 def get_distance_matrix():
     ids_list = []
     volume_list = []
     total_volume = 0
-    
-    ids_list.append("place_id:ChIJoV344UOcmAARaKSgsyawNmI")
-    volume_list.append(0)
-    
+
+    ids_list.append("place_id:ChIJoV344UOcmAARaKSgsyawNmI")  # ID do ponto inicial (referência)
+    volume_list.append(0)  # Volume inicial é zero
+
     for row in data_rows:
         delivery_point_var, load_P, load_M, load_G = row
         delivery_point = delivery_point_var.get()
-        
-         # Obtenha os volumes de caixas P, M e G
+
         try:
             p_volume = int(load_P.get()) * 0.0025
             m_volume = int(load_M.get()) * 0.01
             g_volume = int(load_G.get()) * 0.054
         except ValueError:
-            messagebox.showerror("Erro","Quantidade de caixas inválida, deve ser um número.")
+            messagebox.showerror("Erro", "Quantidade de caixas inválida, deve ser um número.")
             return
-        
-        # Calcula o volume total para o ponto de entrega
+
         point_volume = p_volume + m_volume + g_volume
         total_volume += point_volume
-        
+
         if delivery_point in delivery_points_dict:
-            ids_list.append("place_id:"+delivery_points_dict[delivery_point])
+            ids_list.append("place_id:" + delivery_points_dict[delivery_point])
         else:
-           messagebox.showerror("Erro",f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
-            
-        # Verifica se o volume total excede o limite
+            messagebox.showerror("Erro", f"Ponto de entrega '{delivery_point}' não encontrado no dicionário.")
+
+        # Adiciona o volume do ponto de entrega à lista de volumes
+        volume_list.append(point_volume)
+
         if total_volume > 15:
-            messagebox.showerror("Erro",f"O volume total ({total_volume:.2f} m³) excede o limite do veículo de 15 m³.")
+            messagebox.showerror("Erro", f"O volume total ({total_volume:.2f} m³) excede o limite do veículo de 15 m³.")
             return
-        
-        volume_list.append(total_volume)
-    
+
     dist_matrix, time_matrix = mp.build_url(ids_list)
-    
+
     glpk.create_model(len(dist_matrix), dist_matrix, volume_list)
 
 if __name__ == '__main__':
@@ -192,16 +192,10 @@ if __name__ == '__main__':
     data_frame = Frame(window)
     data_frame.pack(fill='both', expand=True)
 
-    data_rows = []
-    add_row()
+    add_row_button = Button(window, text="Adicionar Ponto de Entrega", command=add_row)
+    add_row_button.pack(pady=10)
 
-    button_frame = Frame(window)
-    button_frame.pack(side='bottom', fill='x', pady=10)
-
-    add_row_button = Button(button_frame, text="+", width=5, command=add_row)
-    add_row_button.pack(side='left', padx=5)
-
-    create_button = Button(button_frame, text="Gerar rotas", width=36, command=get_distance_matrix)
-    create_button.pack(side='right', padx=5)
+    generate_button = Button(window, text="Gerar Rota", command=get_distance_matrix)
+    generate_button.pack(pady=10)
 
     window.mainloop()
