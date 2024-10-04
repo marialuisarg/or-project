@@ -1,10 +1,9 @@
 from tkinter import Tk, Label, Entry, Button, Frame, StringVar, Listbox, Scrollbar
 import maps_api_handler as mp
-import pyomo
+import solver as glpk
 
 delivery_points_dict = {
     "Petrópolis":"ChIJX8jgemIAmQARqkMTFntxVf0",
-    "JUIZ DE FORA":"ChIJoV344UOcmAARaKSgsyawNmI",
     "Rio Pomba":"ChIJ3Swriwv4ogAR1LEPOKSjZ5o",
     "Ubá":"ChIJ0dkPI1oZowARMdqbTYsZmzE",
     "Visconde do Rio Branco":"ChIJ1zehpdk9owARVqGBQ-NzbpY",
@@ -72,6 +71,7 @@ delivery_points_dict = {
     "RJ - Mesquita":"ChIJLXOC-dZgmQARkh8-kC1RJlE",
     "RJ - Belford Roxo":"ChIJaTNJK25vmQARcMLcTsC0f7s"
 }
+
 def create_custom_dropdown(parent, variable, options):
     def toggle_menu():
         # Se o menu já estiver aberto, feche-o
@@ -146,6 +146,8 @@ def add_row():
 def get_distance_matrix():
     ids_list = []
     
+    ids_list.append("place_id:ChIJoV344UOcmAARaKSgsyawNmI")
+    
     for row in data_rows:
         delivery_point_var, load_P, load_M, load_G = row
         delivery_point = delivery_point_var.get()
@@ -156,7 +158,8 @@ def get_distance_matrix():
     
     # Aqui você pode passar os IDs para gerar a matriz de distância com a API
     dist_matrix, time_matrix = mp.build_url(ids_list)
-    #print(dist_matrix)
+    
+    glpk.create_model(len(dist_matrix), dist_matrix)
 
 if __name__ == '__main__':
     window = Tk()
